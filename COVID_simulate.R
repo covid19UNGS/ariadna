@@ -31,16 +31,13 @@ test_and_isolate_m <- 0.15 ## Additional proportional reduction of mild cases un
   
 needed_packages <- c(
     "pomp"
-  , "plyr"
+  , "tidyverse"
   , "dplyr"
-  , "ggplot2"
-  , "magrittr"
   , "scales"
   , "lubridate"
-  , "tidyr"
   , "data.table")
 
-lapply(needed_packages, require, character.only = TRUE)
+lapply(needed_packages, function(x) { if(!require(x,character.only = TRUE)) install.packages(x)} )
 
 source("ggplot_theme.R")
 source("COVID_pomp.R")
