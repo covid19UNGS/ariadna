@@ -42,7 +42,7 @@ source("COVID_pomp.R")
  
 if (fit.with == "D") {
 # deaths   <- fread("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
-deaths     <- read.csv("us-counties.txt")
+deaths     <- read.csv("Data/us-counties.txt")
 deaths     <- deaths %>% mutate(date = as.Date(date)) %>% filter(county == focal.county)
 deaths     <- deaths %>% dplyr::filter(date < max(date) - fit.minus)
 } else if (fit.with == "H") {
@@ -57,7 +57,7 @@ hospit     <- hospit %>%
 hospit    <- hospit %>% dplyr::filter(date < max(date) - fit.minus)  
 }
 
-params <- read.csv("params.csv", stringsAsFactors = FALSE)
+params <- read.csv("Data/params.csv", stringsAsFactors = FALSE)
 params <- params %>% mutate(Value = sapply(est, function(x) eval(parse(text = x))))
 
 fixed_params        <- params$Value
