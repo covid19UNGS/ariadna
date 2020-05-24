@@ -1,15 +1,34 @@
 #
 #
 # 
-library(plyr)
 library(tidyverse)
+library(lubridate)
 library(pomp)
 theme_set(theme_bw())
 options(stringsAsFactors=FALSE)
 stopifnot(packageVersion("pomp")>="2.1")
 set.seed(594709947L)
 
+#
+# Lee datos de repositorio covid mapache
+#
+corRaw<-read_csv('https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=0')
 
+cor <- corRaw %>% filter( osm_admin_level_4 =="CABA") %>% transmute(CABAdia=nue_casosconf_diff,fecha=dmy(fecha),dias =as.numeric( fecha - min(fecha)))
+
+#
+# Lee datos de repositorio Datos Abiertos Ministerio (1ra version) 
+#
+csv_fname <- "https://github.com/covid19UNGS/proyecciones/raw/master/Data/Covid19Casos.csv"
+corRaw <- read_csv(csv_fname) 
+cor <- corRaw %>% filter(clasificacion_resumen=="Confirmado",provincia_carga=="CABA",) %>% 
+  transmute(fecha=ymd(fecha_fis),dias =as.numeric( fecha - min(fecha))) %>% group_by(dias) %>% summarise(CABADia=n())
+
+
+
+#
+# Lee archivo de datos de repositiorio covid19UNGS
+#
 csv_fname <- "https://raw.githubusercontent.com/covid19UNGS/proyecciones/master/Data/coronavirus_ar.csv"
 cor <- read_csv(csv_fname) %>% dplyr::select(fecha:TDFdia)  %>% mutate(fecha=ymd(fecha), dias =as.numeric( fecha - min(fecha))) %>%
         mutate(importadosdia=importados-lag(importados))
@@ -21,6 +40,10 @@ cor %>% select(dias,CABAdia) -> meas
 meas %>%  ggplot(aes(x=dias,y=CABAdia))+
   geom_line()+
   geom_point()
+
+#
+# Formula SIR
+#
 
 
 sir_step <- Csnippet("
