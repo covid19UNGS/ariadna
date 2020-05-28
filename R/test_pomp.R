@@ -19,10 +19,15 @@ simulate(t0=0, times=1:20,
 ) -> sim1
 
 
+spy(sim1)
+
 ggplot(data=as.data.frame(sim1),aes(x=time,y=N))+
   geom_line()
 
 
+#
+# Agregamos rmeasure
+#
 simulate(t0=0, times=1:20,
          params=c(r=1.2,K=200,sigma=0.1,N_0=50,b=0.05),
          rinit=function (N_0, ...) {
@@ -144,7 +149,7 @@ parus %>%
     paramnames=c("r","K","sigma","b","N_0")
   ) -> vpC
 
-Csnippet("
+  Csnippet("
   lik = dpois(pop,b*N,give_log);
 ") -> dmeas
 
