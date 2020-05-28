@@ -94,6 +94,8 @@ sims %>%
 
 #' 
 
+sims %>% filter(.id!="data") %>% group_by(.id) %>% summarise_all(mean)
+
 
 seir_step <- Csnippet("
   double dN_SE = rbinom(S,1-exp(-Beta*I/N*dt));

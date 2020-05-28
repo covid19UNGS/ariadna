@@ -3,23 +3,12 @@
 sir_step <- Csnippet("
                      // adjust betat for social distancing interventions
                      double betat;
-                     if (intervention == 3 & thresh_crossed == 1) { // 2 is for threshhold intervention
-                       betat = beta0*thresh_int_level; 
-                     } 
-                     else if (intervention == 3 & thresh_crossed == 0) {
-                       betat = beta0*back_int_level;
-                     } 
-                     else if (intervention == 2) betat = beta0*soc_dist_level_sip; // sip is for shelter in place
-                     else if (intervention == 1) betat = beta0*soc_dist_level_wfh; // wfh is for weak wfh
-                     else betat = beta0; // everything else is no intervention
+                     betat = beta0; // everything else is no intervention
                      
                      // adjust contact rates if isolation of symptomatic cases is in place
-                     double iso_m = 1;
-                     double iso_s = 1;
-                     if(isolation == 1){
-                        iso_m = iso_mild_level;
-                        iso_s = iso_severe_level;
-                     }
+                     double iso_m = 0;
+                     double iso_s = 0;
+
                     
                      // if import rate is above zero, draw importations, assuming they are perfectly balanced with departures of susceptible individuals
                      double import = 0;
@@ -32,6 +21,9 @@ sir_step <- Csnippet("
                     
                      // calculate transition numbers
                      double dSE = rbinom(S, 1-exp(-betat*(Ca*Ia/N + Cp*Ip/N + iso_m*Cm*Im/N + iso_s*Cs*Is/N)*dt)); 
+                     
+                     // gamma = 1/periodo de latencia
+                     // alpha = proporcion de asyntomaticos
                      double rateE[2];
                      double dE_all[2];
                      rateE[0] = alpha*gamma; // going to asymtomatic
@@ -40,25 +32,57 @@ sir_step <- Csnippet("
                      double dEIa = dE_all[0];
                      double dEIp = dE_all[1];
                      double dIaR = rbinom(Ia, 1 - exp(-lambda_a*dt));
+                     
+                     // Desde Ip va a Ih=se van al hospital, Ic=Se van a la casa
+                     //
                      double rateIp[2];
                      double dIp_all[2];
-                     rateIp[0] = mu*lambda_p; // going to mild symptomatic
-                     rateIp[1] = (1-mu)*lambda_p; // going to severe symptomatic
+                     rateIp[0] = mu*lambda_p;      // van a la casa
+                     rateIp[1] = (1-mu)*lambda_p;  // van al hospital
                      reulermultinom(2, Ip, rateIp, dt, &dIp_all);
-                     double dIpIm = dIp_all[0];
-                     double dIpIs = dIp_all[1];
-                     double dImR = rbinom(Im, 1 - exp(-lambda_m*dt));
+                     double dIpIc = dIp_all[0];
+                     double dIpIh = dIp_all[1];
                      
+                     // De Ic (casa) a recuperados, 1/lambda_m periodo de recuperacion de Ic 
+                     //
+                     double dIcR = rbinom(Ic, 1 - exp(-lambda_m*dt));
+
+                     // De Los hospitalizados el parametro vu define si va ITU
+                     //    variables = It (terapia intensiva) Iu va a cama comun
+                     // definimos parametro lambda_h 
+                     //double rateIp[2];
+                     //double dIp_all[2];
+                     rateIp[0] = vu*lambda_h;     // va a terapia intensiva
+                     rateIp[1] = (1-vu)*lambda_h; // va a cama comun
+                     reulermultinom(2, Ih, rateIp, dt, &dIp_all);
+                     double dIpIt = dIp_all[0];
+                     double dIpIu = dIp_all[1];
+
+                     // De terapia intensiva a Death It --> D
+                     // delta proporcion de It que mueren
+                     // lambda_t tasa de salida de Iu 1/It es el tiempo de internacion en UTI
+                     //
                      double rateIs[2];
                      double dIs_all[2];
-                     rateIs[0] = delta*lambda_s; // hospitalized ultimately going to death
-                     rateIs[1] = (1-delta)*lambda_s; // hospitalized ultimately going to recovered
-                     reulermultinom(2, Is, rateIs, dt, &dIs_all);
-                     double dIsHd = dIs_all[0];
-                     double dIsHr = dIs_all[1];
-                     double dHdD = rbinom(Hd, 1 - exp(-rho_d*dt));
-                     double dHrR = rbinom(Hr, 1 - exp(-rho_r*dt));
+                     rateIs[0] = delta*lambda_t;     // hospitalized en ICU ultimately going to death
+                     rateIs[1] = (1-delta)*lambda_t; // hospitalized en ICU ultimately going to recovered
+                     reulermultinom(2, It, rateIs, dt, &dIs_all);
+                     double dItHd = dIs_all[0];
+                     double dItHr = dIs_all[1];
                      
+                     // De cama comun a Death Iu --> D o no
+                     // deltu proporcion de Iu que mueren
+                     // lambda_u tasa de salida de Iu 1/Iu es el tiempo de internacion en UTI
+                     //
+                     double rateIs[2];
+                     double dIs_all[2];
+                     rateIs[0] = deltu*lambda_u;     // hospitalized en ICU ultimately going to death
+                     rateIs[1] = (1-deltu)*lambda_u; // hospitalized en ICU ultimately going to recovered
+                     reulermultinom(2, Iu, rateIs, dt, &dIs_all);
+                     double dIuHd = dIs_all[0];
+                     double dIuHr = dIs_all[1];
+
+
                      // update the compartments
                      S  -= dSE; // susceptible 
                      E  += dSE - dEIa - dEIp + import; // exposed
