@@ -1,6 +1,14 @@
 # for fitting E0 added E_init parameter that would need to be discarded
 # define the changes for a time step forward
 sir_step <- Csnippet("
+                    // S, E, 
+                    // Ip= Presintomaticos
+                    // Ia= Asintomaticos, Ih= Hospitalizados, Ic=Aislados en Casa (sintomas leves), 
+                    // It= Terapia intensiva
+                    // Iu= Cama comun 
+                    // D= Fallecidos
+                    // R= Recuperados 
+                    
                      // adjust betat for social distancing interventions
                      double betat;
                      betat = beta0; // everything else is no intervention
@@ -8,19 +16,17 @@ sir_step <- Csnippet("
                      // adjust contact rates if isolation of symptomatic cases is in place
                      double iso_m = 0;
                      double iso_s = 0;
-
-                    
-                     // if import rate is above zero, draw importations, assuming they are perfectly balanced with departures of susceptible individuals
-                     double import = 0;
-                     if(import_rate > 0){
-                      import = fmin(rpois(import_rate*dt), S);
-                     }
-                     // tracking of total imported, removing them them from susceptibles
+                     
+                     
+                    // Los importados no son una tasa serían un dato
+                     //
                      import_total += import;
                      S -= import;
                     
                      // calculate transition numbers
-                     double dSE = rbinom(S, 1-exp(-betat*(Ca*Ia/N + Cp*Ip/N + iso_m*Cm*Im/N + iso_s*Cs*Is/N)*dt)); 
+                     // Asume que Ih,Ic podrian transmitir (Iu,It para infecciones intrahospitalarias???)
+                     //
+                     double dSE = rbinom(S, 1-exp(-betat*(Ca*Ia/N + Cp*Ip/N + iso_m*Ch*Ih/N + iso_s*Cc*Ic/N)*dt)); 
                      
                      // gamma = 1/periodo de latencia
                      // alpha = proporcion de asyntomaticos
@@ -55,8 +61,8 @@ sir_step <- Csnippet("
                      rateIp[0] = vu*lambda_h;     // va a terapia intensiva
                      rateIp[1] = (1-vu)*lambda_h; // va a cama comun
                      reulermultinom(2, Ih, rateIp, dt, &dIp_all);
-                     double dIpIt = dIp_all[0];
-                     double dIpIu = dIp_all[1];
+                     double dIhIt = dIp_all[0];
+                     double dIhIu = dIp_all[1];
 
                      // De terapia intensiva a Death It --> D
                      // delta proporcion de It que mueren
@@ -82,25 +88,41 @@ sir_step <- Csnippet("
                      double dIuHd = dIs_all[0];
                      double dIuHr = dIs_all[1];
 
+                     // En el modelo de Eirin hay un paso mas porque de Hr --> R y Hd --> D
+                     // No se porque hace esto 
+                     // que corresponden a estas tasas 
+
+                     double dHdD = rbinom(Hd, 1 - exp(-rho_d*dt));
+                     double dHrR = rbinom(Hr, 1 - exp(-rho_r*dt));
+
 
                      // update the compartments
-                     S  -= dSE; // susceptible 
+                     S  -= dSE;                        // susceptible 
                      E  += dSE - dEIa - dEIp + import; // exposed
-                     Ia += dEIa - dIaR; // infectious and asymptomatic
-                     Ip += dEIp - dIpIs - dIpIm; // infectious and pre-symptomatic
-                     Is += dIpIs - dIsHd - dIsHr; // infectious and severe symptoms (that will be hospitalized)
-                     Im += dIpIm - dImR; // infectious and minor symptoms
-                     I   = Ia + Ip + Im + Is; // total number of infected
-                     I_new_sympt += dIpIs + dIpIm; // total number of newly symptomatic
-                     Hr += dIsHr - dHrR; // hospitalized that will recover
-                     Hd += dIsHd - dHdD; // hospitalizations that will die
-                     H   = Hr + Hd; // total hospitalizations
-                     R  += dHrR + dImR + dIaR; // recovered
-                     D  += dHdD; // fatalities
-                     D_new += dHdD; // daily fatalities
-                     H_new += dIsHr + dIsHd; // daily new hospitalizations
-                     if(intervention == 3 & H >= thresh_H_start) thresh_crossed = 1;
-                     else if(intervention == 3 & thresh_crossed == 1 & H < thresh_H_end) thresh_crossed = 0;
+                     Ia += dEIa - dIaR;                // infectious and asymptomatic
+                     Ip += dEIp - dIpIc - dIpIh;       // infectious and pre-symptomatic
+
+                     Ih += dIpIh - dIhIt - dIhIu;      // Hospitalizados a UTI o comun 
+                     It += dIhIt - dIhHd - dIhHr;      // UTI a fallecidos o recuperados 
+                     Iu += dIhIt - dIhHd - dIhHr;      // Comun a fallecidos o recuperados 
+                     
+                     I   = Ia + Ip + Ih + It + Iu;     // total number of infected ???? no sería Ia + Ip???? 
+
+                     I_new_sympt += dIpIc + dIpIh;     // total number of newly symptomatic
+                     Hr += dItHr + dIuHr - dHrR;       // hospitalized that will recover
+                     Hd += dItHd + dIuHd - dHdD;       // hospitalizations that will die
+                     H   = Hr + Hd;                    // total hospitalizations
+                     R  += dHrR + dIcR + dIaR;         // recovered
+                     D  += dHdD;                       // fatalities
+                     D_new += dHdD;                    // daily fatalities
+
+                     H_new += dItHr + dItHd + dIuHr + dIuHd;  // daily new hospitalizations
+
+
+                     // Las bifurcaciones que tienen reulermultinom() 
+                     // parece que no representan un tiempo por eso tiene que agregar 
+                     // la transición 
+                     //  
                      ")
 
 # define the initial set up, currently, every is susceptible except the exposed people
