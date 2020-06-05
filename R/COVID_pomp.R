@@ -49,13 +49,13 @@ sir_step <- Csnippet("
                      double dIpIc = dIp_all[0];
                      double dIpIh = dIp_all[1];
                      
-                     // De Ic (casa) a recuperados, 1/lambda_m periodo de recuperacion de Ic 
+                     // De Ic (casa) a recuperados, 1/lambda_c periodo de recuperacion de Ic 
                      //
-                     double dIcR = rbinom(Ic, 1 - exp(-lambda_m*dt));
+                     double dIcR = rbinom(Ic, 1 - exp(-lambda_c*dt));
 
-                     // De Los hospitalizados el parametro vu define si va ITU
+                     // De Los hospitalizados el parametro vu= proporcion de hospitalizados que va a ITU
                      //    variables = It (terapia intensiva) Iu va a cama comun
-                     // definimos parametro lambda_h 
+                     // definimos parametro lambda_h = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                      //double rateIp[2];
                      //double dIp_all[2];
                      rateIp[0] = vu*lambda_h;     // va a terapia intensiva
@@ -75,25 +75,16 @@ sir_step <- Csnippet("
                      reulermultinom(2, It, rateIs, dt, &dIs_all);
                      double dItHd = dIs_all[0];
                      double dItHr = dIs_all[1];
-                     
-                     // De cama comun a Death Iu --> D o no
-                     // deltu proporcion de Iu que mueren
-                     // lambda_u tasa de salida de Iu 1/Iu es el tiempo de internacion en UTI
-                     //
-                     double rateIs[2];
-                     double dIs_all[2];
-                     rateIs[0] = deltu*lambda_u;     // hospitalized en ICU ultimately going to death
-                     rateIs[1] = (1-deltu)*lambda_u; // hospitalized en ICU ultimately going to recovered
-                     reulermultinom(2, Iu, rateIs, dt, &dIs_all);
-                     double dIuHd = dIs_all[0];
-                     double dIuHr = dIs_all[1];
-
-                     // En el modelo de Eirin hay un paso mas porque de Hr --> R y Hd --> D
-                     // No se porque hace esto 
-                     // que corresponden a estas tasas 
 
                      double dHdD = rbinom(Hd, 1 - exp(-rho_d*dt));
                      double dHrR = rbinom(Hr, 1 - exp(-rho_r*dt));
+                     
+                     // De cama comun a Recuperados 
+                     // 
+                     // lambda_u tasa de salida de Iu 1/Iu es el tiempo de internacion en UTI
+                     //
+                     double dIuR = rbinom(Hd, 1 - exp(-lambda_u*dt));
+
 
 
                      // update the compartments
@@ -103,15 +94,15 @@ sir_step <- Csnippet("
                      Ip += dEIp - dIpIc - dIpIh;       // infectious and pre-symptomatic
 
                      Ih += dIpIh - dIhIt - dIhIu;      // Hospitalizados a UTI o comun 
-                     It += dIhIt - dIhHd - dIhHr;      // UTI a fallecidos o recuperados 
-                     Iu += dIhIt - dIhHd - dIhHr;      // Comun a fallecidos o recuperados 
+                     It += dIhIt - dItHd - dItHr;      // UTI a fallecidos o recuperados 
+                     Iu += dIhIu - dIuR;               // Comun a recuperados 
                      
                      I   = Ia + Ip + Ih + It + Iu;     // total number of infected ???? no sería Ia + Ip???? 
 
                      I_new_sympt += dIpIc + dIpIh;     // total number of newly symptomatic
-                     Hr += dItHr + dIuHr - dHrR;       // hospitalized that will recover
-                     Hd += dItHd + dIuHd - dHdD;       // hospitalizations that will die
-                     H   = Hr + Hd;                    // total hospitalizations
+                     Hr += dItHr - dHrR;       // hospitalized that will recover
+                     Hd += dItHd - dHdD;       // hospitalizations that will die
+                     H  = Hr + Hd;                    // total hospitalizations
                      R  += dHrR + dIcR + dIaR;         // recovered
                      D  += dHdD;                       // fatalities
                      D_new += dHdD;                    // daily fatalities
