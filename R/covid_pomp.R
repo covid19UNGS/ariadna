@@ -111,8 +111,7 @@ sir_step <- Csnippet("
 
 
                      // Las bifurcaciones que tienen reulermultinom() 
-                     // parece que no representan un tiempo por eso tiene que agregar 
-                     // la transición 
+                     // implican que para todas las transiciones el tiempo es el mismo
                      //  
                      ")
 
@@ -122,8 +121,9 @@ sir_init <- Csnippet("
                      E = E0;
                      Ia = 0;
                      Ip = 0;
-                     Is = 0;
-                     Im = 0;
+                     Ih = 0;
+                     It = 0;
+                     Iu = 0;
                      I = 0;
                      I_new_sympt = 0;
                      Hr = 0;
@@ -133,7 +133,6 @@ sir_init <- Csnippet("
                      D = 0;
                      D_new = 0;
                      H_new = 0;
-                     thresh_crossed = 0;
                      import_total = 0;
                      ")
 
@@ -222,12 +221,11 @@ accum_names = c("D_new", "H_new", "I_new_sympt")
 # state variables
 state_names = c(
     "S" , "E" , "Ia"
-  , "Ip", "Is", "Im"
+  , "Ip", "Ih", "It", "Iu"
   , "I" , "I_new_sympt"
   , "H" , "Hr", "Hd"
   , "R" , "D" 
   , "D_new", "H_new" 
-  , "thresh_crossed"
   , "import_total"
 )
 
