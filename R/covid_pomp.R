@@ -14,8 +14,8 @@ sir_step <- Csnippet("
                      betat = beta0; // everything else is no intervention
                      
                      // adjust contact rates if isolation of symptomatic cases is in place
-                     double iso_m = 0;
-                     double iso_s = 0;
+                     double iso_h = 0;    // Hospitalizados pueden contagiar
+                     double iso_c = 0;    // En casa pueden contagiar 
                      
                      
                     // Los importados no son una tasa serían un dato
@@ -26,7 +26,7 @@ sir_step <- Csnippet("
                      // calculate transition numbers
                      // Asume que Ih,Ic podrian transmitir (Iu,It para infecciones intrahospitalarias???)
                      //
-                     double dSE = rbinom(S, 1-exp(-betat*(Ca*Ia/N + Cp*Ip/N + iso_m*Ch*Ih/N + iso_s*Cc*Ic/N)*dt)); 
+                     double dSE = rbinom(S, 1-exp(-betat*(Ca*Ia/N + Cp*Ip/N + iso_h*Ch*Ih/N + iso_c*Cc*Ic/N)*dt)); 
                      
                      // gamma = 1/periodo de latencia
                      // alpha = proporcion de asyntomaticos
@@ -155,26 +155,6 @@ dmeas_hosp <- Csnippet("double tol = 1e-16;
 
 # parameters to transform
 if (fitting) {
-  if (fit_to_sip) {
-par_trans <- parameter_trans(log = c("beta0", "import_rate"),
-                            logit = c("soc_dist_level_sip"))
-
-param_names <- c(
-   "beta0"
-  , "Ca", "Cp", "Cs", "Cm"
-  , "alpha"
-  , "mu"
-  , "delta"
-  , "gamma"
-  , "lambda_a", "lambda_s", "lambda_m", "lambda_p"
-  , "rho_r"
-  , "rho_d"
-  , "N"
-  , "E0"
-  , "soc_dist_level_sip"
-  , "import_rate"
-)
-  } else {
 
 par_trans <- parameter_trans(log = c("beta0", "import_rate"))
 
@@ -183,9 +163,10 @@ param_names <- c(
   , "Ca", "Cp", "Cs", "Cm"
   , "alpha"
   , "mu"
+  , "vu"
   , "delta"
   , "gamma"
-  , "lambda_a", "lambda_s", "lambda_m", "lambda_p"
+  , "lambda_a", "lambda_h", "lambda_t", "lambda_p", "lambda_u"
   , "rho_r"
   , "rho_d"
   , "N"
@@ -193,8 +174,6 @@ param_names <- c(
   , "import_rate"
 )
       
-}
-
 } else {
 par_trans <- parameter_trans(log = c("beta0"))  
 
@@ -203,9 +182,10 @@ param_names <- c(
   , "Ca", "Cp", "Cs", "Cm"
   , "alpha"
   , "mu"
+  , "vu"
   , "delta"
   , "gamma"
-  , "lambda_a", "lambda_s", "lambda_m", "lambda_p"
+  , "lambda_a", "lambda_h", "lambda_t", "lambda_p", "lambda_u"
   , "rho_r"
   , "rho_d"
   , "N"

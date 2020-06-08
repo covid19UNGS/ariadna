@@ -9,11 +9,8 @@ rds.name       <- "output/Contra Costa_TRUE_FALSE_0_2020-04-27_temp.Rds"
 nsim           <- 300     ## Number of epidemic simulations for each parameter set
 #### ONLY ONE AT A TIME ALLOWED RIGHT NOW
 inf_iso        <- FALSE   ## Do we ever reduce from shelter in place to some form of strong/moderate social distancing?
-light          <- TRUE    ## Lightswitch method
 red_shelt.t    <- 76      ## time shelter in place changes to a reduced form (inf_iso or light) -- Now June 1
 red_shelt.s    <- 0.5     ## new social dist strength after time red_shelt.t
-thresh_H.start <- 15      ## Threshold when lightswtich turns on (when we get higher than this)
-thresh_H.end   <- 5       ## Threshold when lightswtich turns off (when we drop from above to this value)
 sim_length     <- 500     ## how many days to run the simulation
 state.plot     <- "H"     ## State variable for plotting (Hospit [H], Death [D], or Cases [C])
 focal.county   <- "Contra Costa"
@@ -40,7 +37,7 @@ needed_packages <- c(
 lapply(needed_packages, function(x) { if(!require(x,character.only = TRUE)) install.packages(x)} )
 
 source("ggplot_theme.R")
-source("COVID_pomp.R")
+source("covid_pomp.R")
 
 #deaths <- read.csv("us-counties.txt")
 #deaths <- fread("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")

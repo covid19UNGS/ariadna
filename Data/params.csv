@@ -1,0 +1,19 @@
+Parameter,est,lwr,upr,details
+Ca,0.6,0.4,0.8,Relative infectiousness of asymptomatic infected individuals
+Cp,1,,,Relative infectiousness of preymptomatic infected individuals
+Ch,1,,,Relative infectiousness of hospitalized
+Cc,1,,,Relative infectiousness of mildly symptomatic sent to home individuals
+alpha,0.43,0.3,0.5,Proportion of infections that are asymptomatic
+gamma,1/3.5,,,Incubation period
+lambda_a,1/7,,,Infectious period for asymptomatic infections
+lambda_p,1/1.5,,,Infectious period for presymptomatic infections
+lambda_c,1/1.5,,,Periodo de los que se van a casa
+lambda_h,1/5.5,,,Período de hospitalización inicial 
+lambda_t,1/5.5,,,Hospitalizados en ITU que se recuperan o mueren
+lambda_u,1/5.5,,,Cama Comun a Recuperados dIuR 
+delta,0.2,0.1,0.3,Fatality rate among hospitalizations
+mu,0.95,0.925,0.975,Proportion of symptomatic infections that require hospitalization
+vu,0.95,0.925,0.975,Proporcion de hospitalizados que va a ITU
+rho_d,1/13.3,,,1 / duration of hospital stay of those that die of infection
+rho_r,1/15,,,1 / duration of hospital stay of those that recover from infection
+import_rate,1/4,,,Importation rate of infections
