@@ -18,8 +18,13 @@ sir_step <- Csnippet("
                      double iso_c = 0;    // En casa pueden contagiar 
                      
                      
-                    // Los importados no son una tasa serían un dato
+                     // Los importados no son una tasa serían un dato
                      //
+                     // if import rate is above zero, draw importations, assuming they are perfectly balanced with departures of susceptible individuals
+                     double import = 0;
+                     if(import_rate > 0){
+                        import = fmin(rpois(import_rate*dt), S);
+                     }
                      import_total += import;
                      S -= import;
                     

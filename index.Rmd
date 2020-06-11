@@ -23,8 +23,6 @@ needed_packages <- c(
 
 lapply(needed_packages, function(x) { if(!require(x,character.only = TRUE)) install.packages(x)} )
 
-require(lubridate)
-require(tidyverse)
 theme_set(theme_bw())
 
 #
@@ -46,20 +44,35 @@ source("R/covid_pomp.R")
 
 cor<-read_csv('https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=0')
 
-unique(cor$osm_admin_level_4)
+# unique(cor$osm_admin_level_4)
 
 distrito.data <- cor %>% filter( osm_admin_level_4 =="CABA") %>% mutate(fecha=dmy(fecha), dias =as.numeric( fecha - min(fecha))) %>% 
   rename(fallecidos=nue_fallecidos_diff,casos=nue_casosconf_diff) %>% select(fecha,dias,casos,fallecidos,transmision_tipo)
 
+
 #
 # leer valores de parametros
 #
-read_csv("Data/params.csv")
+params <- read_csv("Data/params.csv")
+params <- params %>% mutate(value = sapply(est, function(x) eval(parse(text = x))))
+fixed_params        <- params$value
+names(fixed_params) <- params$Parameter
+fixed_params        <- c(fixed_params, N = 2000000,E0=10) 
+  
+
+R0 <- 2.040
+#
+# R0 estimado a partir de los datos de la localidad
+#
+fixed_params$beta0 <- R0 * params[7,]$value     # lambda_a
+
+source("R/covid_pomp.R")
+  
 
 covid.fitting <- distrito.data %>%
   pomp(
     time       = "dias"
-  , t0         = 1
+  , t0         = 0
   , rprocess   = euler(sir_step, delta.t = 1/6)
   , rmeasure   = { 
    if (fit.with == "D") { rmeas_deaths } else if (fit.with == "H") { rmeas_hosp }
@@ -82,19 +95,8 @@ SEIR.sim <- do.call(
   pomp::simulate
   , list(
     object         = covid.fitting
-    , times        = intervention.forecast@times
-    , params = c(fixed_params
-    , c(
-      beta0              = variable_params[i, "beta0est"]
-    , soc_dist_level_sip = variable_params[i, "soc_dist_level_sip"]
-    , E0                 = variable_params[i, ]$E0
-    , Ca                 = variable_params[i, ]$Ca
-    , alpha              = variable_params[i, ]$alpha
-    , delta              = variable_params[i, ]$delta
-    , mu                 = variable_params[i, ]$mu
-   , rho_d              = variable_params[i, ]$rho_d
-   , rho_r              = variable_params[i, ]$rho_r
-      ))
+    , times        = 100
+    , params       = fixed_params
     , nsim         = nsim
     , format       = "d"
     , include.data = F

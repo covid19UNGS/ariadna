@@ -1,6 +1,6 @@
 Parameter,est,lwr,upr,details
-Ca,0.6,0.4,0.8,Relative infectiousness of asymptomatic infected individuals
-Cp,1,,,Relative infectiousness of preymptomatic infected individuals
+Ca,0.4,0.4,0.8,Relative infectiousness of asymptomatic infected individuals
+Cp,0.6,,,Relative infectiousness of preymptomatic infected individuals
 Ch,1,,,Relative infectiousness of hospitalized
 Cc,1,,,Relative infectiousness of mildly symptomatic sent to home individuals
 alpha,0.43,0.3,0.5,Proportion of infections that are asymptomatic
@@ -17,3 +17,4 @@ vu,0.95,0.925,0.975,Proporcion de hospitalizados que va a ITU
 rho_d,1/13.3,,,1 / duration of hospital stay of those that die of infection
 rho_r,1/15,,,1 / duration of hospital stay of those that recover from infection
 import_rate,1/4,,,Importation rate of infections
+beta0,0.44,,,
